@@ -18,9 +18,10 @@
 }
 
 .header-brand h1 {
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -35,6 +36,26 @@
   margin-left: auto;
   display: flex;
   align-items: stretch;
+}
+
+/* ── Theme toggle ────────────────────────── */
+.theme-toggle {
+  border: none;
+  border-left: var(--border);
+  background: var(--white);
+  color: var(--black);
+  cursor: pointer;
+  padding: 0 18px;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.1s, color 0.1s;
+  display: flex;
+  align-items: center;
+}
+
+.theme-toggle:hover {
+  background: var(--black);
+  color: var(--white);
 }
 
 /* ── Step nav ────────────────────────────── */
@@ -52,6 +73,7 @@
   background: var(--white);
   color: var(--gray-400);
   cursor: pointer;
+  font-family: var(--font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;

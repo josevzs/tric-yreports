@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useAppStore } from './store/appStore';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import UploadStep from './components/UploadStep/UploadStep';
@@ -14,8 +15,23 @@ const STEPS: { id: AppStep; label: string }[] = [
   { id: 'report',     label: '04 — Report' },
 ];
 
+function useTheme() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const stored = localStorage.getItem('theme');
+    return stored === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  return [theme, () => setTheme(t => t === 'dark' ? 'light' : 'dark')] as const;
+}
+
 export default function App() {
   const { currentStep, uploadSummary, setStep, error, setError } = useAppStore();
+  const [theme, toggleTheme] = useTheme();
   const stepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
@@ -30,6 +46,13 @@ export default function App() {
           )}
         </div>
         <div className="header-right">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+          >
+            {theme === 'dark' ? '○' : '●'}
+          </button>
           <SettingsPanel />
         </div>
       </header>

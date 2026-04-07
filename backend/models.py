@@ -20,6 +20,8 @@ PRESET_CATEGORIES: list[str] = [
     "Supermercado",
     "Farmacia",
     "Parking",
+    "Taxis",
+    "Tricount Close",
     "Otros",
 ]
 
@@ -108,6 +110,9 @@ class ReportRequest(BaseModel):
     session_id: str
     trip_name: str = "Trip Report"
     formats: list[str] = ["markdown", "pdf"]
+    report_mode: str = "global"  # "global" or "personal"
+    personal_member: str | None = None
+    exclude_personal_expenses: bool = False
 
 
 class ReportResponse(BaseModel):

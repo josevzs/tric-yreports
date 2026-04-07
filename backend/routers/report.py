@@ -15,17 +15,23 @@ async def generate_report(body: ReportRequest):
     if data is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    kwargs = dict(
+        report_mode=body.report_mode,
+        personal_member=body.personal_member,
+        exclude_personal_expenses=body.exclude_personal_expenses,
+    )
+
     result = ReportResponse()
 
     if "markdown" in body.formats:
         try:
-            result.markdown = generate_markdown(data, body.trip_name)
+            result.markdown = generate_markdown(data, body.trip_name, **kwargs)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Markdown generation failed: {e}")
 
     if "pdf" in body.formats:
         try:
-            pdf_bytes = generate_pdf(data, body.trip_name)
+            pdf_bytes = generate_pdf(data, body.trip_name, **kwargs)
             result.pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
@@ -34,20 +40,30 @@ async def generate_report(body: ReportRequest):
 
 
 @router.get("/report/download/{session_id}/{format}")
-async def download_report(session_id: str, format: str, trip_name: str = "Trip Report"):
+async def download_report(
+    session_id: str, format: str, trip_name: str = "Trip Report",
+    report_mode: str = "global", personal_member: str | None = None,
+    exclude_personal_expenses: bool = False,
+):
     data = session_store.get_session(session_id)
     if data is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    kwargs = dict(
+        report_mode=report_mode,
+        personal_member=personal_member,
+        exclude_personal_expenses=exclude_personal_expenses,
+    )
+
     if format == "md":
-        content = generate_markdown(data, trip_name)
+        content = generate_markdown(data, trip_name, **kwargs)
         return Response(
             content=content.encode("utf-8"),
             media_type="text/markdown",
             headers={"Content-Disposition": f'attachment; filename="{trip_name}.md"'},
         )
     elif format == "pdf":
-        pdf_bytes = generate_pdf(data, trip_name)
+        pdf_bytes = generate_pdf(data, trip_name, **kwargs)
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",

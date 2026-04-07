@@ -7,7 +7,8 @@ import './AIControls.css';
 const ALL_PRESETS = [
   'Estancias', 'Alquiler de coches', 'Comidas y cenas', 'Desayunos y cafés',
   'Entradas', 'Gasolina', 'Peajes', 'Trenes', 'Autobuses', 'Barcos y ferrys',
-  'Aviones', 'Gastos personales', 'Supermercado', 'Farmacia', 'Parking', 'Otros',
+  'Aviones', 'Gastos personales', 'Supermercado', 'Farmacia', 'Parking',
+  'Taxis', 'Tricount Close', 'Otros',
 ];
 
 export default function AIControls() {

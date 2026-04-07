@@ -124,11 +124,19 @@ export async function generateReport(
   sessionId: string,
   tripName: string,
   formats: string[],
+  options?: {
+    report_mode?: 'global' | 'personal';
+    personal_member?: string;
+    exclude_personal_expenses?: boolean;
+  },
 ): Promise<ReportResponse> {
   const { data } = await api.post<ReportResponse>('/report', {
     session_id: sessionId,
     trip_name: tripName,
     formats,
+    report_mode: options?.report_mode ?? 'global',
+    personal_member: options?.personal_member ?? null,
+    exclude_personal_expenses: options?.exclude_personal_expenses ?? false,
   });
   return data;
 }

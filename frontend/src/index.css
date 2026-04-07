@@ -11,8 +11,24 @@
   --gray-600: #555555;
   --border: 1px solid #000;
   --border-light: 1px solid #e0e0e0;
-  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font: 'Space Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: 'Bebas Neue', 'Space Grotesk', Impact, sans-serif;
   --mono: 'Courier New', Courier, monospace;
+}
+
+[data-theme="dark"] {
+  --black: #f0f0f0;
+  --white: #0d0d0d;
+  --gray-100: #1a1a1a;
+  --gray-200: #2a2a2a;
+  --gray-400: #777777;
+  --gray-600: #aaaaaa;
+  --border: 1px solid #f0f0f0;
+  --border-light: 1px solid #2a2a2a;
+}
+
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f0f0f0'/%3E%3C/svg%3E");
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,11 +40,18 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
 }
 
 #root { min-height: 100vh; display: flex; flex-direction: column; }
 
-h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.02em; }
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+h4 { font-family: var(--font); font-weight: 700; letter-spacing: -0.01em; }
 
 input, select, button, textarea { font-family: var(--font); }
 
@@ -49,9 +72,10 @@ code, .mono { font-family: var(--mono); font-size: 0.88em; }
   background: var(--white);
   color: var(--black);
   cursor: pointer;
-  font-size: 13px;
+  font-family: var(--font);
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: background 0.1s, color 0.1s;
   white-space: nowrap;
@@ -64,7 +88,7 @@ code, .mono { font-family: var(--mono); font-size: 0.88em; }
   background: var(--black);
   color: var(--white);
 }
-.btn-fill:hover:not(:disabled) { background: #333; }
+.btn-fill:hover:not(:disabled) { opacity: 0.8; }
 
 .btn-sm { padding: 5px 10px; font-size: 11px; }
 
@@ -78,6 +102,7 @@ textarea {
   background: var(--white);
   color: var(--black);
   padding: 8px 10px;
+  font-family: var(--font);
   font-size: 13px;
   width: 100%;
   outline: none;

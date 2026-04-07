@@ -5,8 +5,11 @@ import { useAppStore } from '../../store/appStore';
 import './ReportView.css';
 
 export default function ReportView() {
-  const { sessionId } = useAppStore();
+  const { sessionId, members } = useAppStore();
   const [tripName, setTripName] = useState('Trip Report');
+  const [reportMode, setReportMode] = useState<'global' | 'personal'>('global');
+  const [personalMember, setPersonalMember] = useState('');
+  const [excludePersonal, setExcludePersonal] = useState(false);
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +21,11 @@ export default function ReportView() {
     setLoading(true);
     setError(null);
     try {
-      const result = await generateReport(sessionId, tripName, ['markdown', 'pdf']);
+      const result = await generateReport(sessionId, tripName, ['markdown', 'pdf'], {
+        report_mode: reportMode,
+        personal_member: reportMode === 'personal' ? personalMember : undefined,
+        exclude_personal_expenses: reportMode === 'personal' ? excludePersonal : false,
+      });
       setMarkdown(result.markdown);
       setPdfBase64(result.pdf_base64);
     } catch (e: unknown) {
@@ -47,9 +54,12 @@ export default function ReportView() {
     URL.revokeObjectURL(url);
   }
 
+  const canGenerate = sessionId && (reportMode === 'global' || (reportMode === 'personal' && personalMember));
+
   return (
     <div className="report-view">
       <div className="report-toolbar">
+        {/* Trip name */}
         <div className="report-name-row">
           <span className="field-label">TRIP NAME</span>
           <input
@@ -60,7 +70,50 @@ export default function ReportView() {
           />
         </div>
 
-        <button className="btn btn-fill" onClick={handleGenerate} disabled={loading}>
+        {/* Mode selector */}
+        <div className="report-mode-row">
+          <span className="field-label">MODE</span>
+          <div className="report-mode-toggle">
+            <button
+              className={`btn btn-sm ${reportMode === 'global' ? 'btn-fill' : ''}`}
+              onClick={() => setReportMode('global')}
+            >
+              Global
+            </button>
+            <button
+              className={`btn btn-sm ${reportMode === 'personal' ? 'btn-fill' : ''}`}
+              onClick={() => setReportMode('personal')}
+            >
+              Personal
+            </button>
+          </div>
+        </div>
+
+        {/* Personal options */}
+        {reportMode === 'personal' && (
+          <div className="report-personal-row">
+            <select
+              value={personalMember}
+              onChange={e => setPersonalMember(e.target.value)}
+              style={{ width: 180 }}
+            >
+              <option value="">— select member —</option>
+              {members.map(m => (
+                <option key={m.member_id} value={m.member_name}>{m.member_name}</option>
+              ))}
+            </select>
+            <label className="report-exclude-label">
+              <input
+                type="checkbox"
+                checked={excludePersonal}
+                onChange={e => setExcludePersonal(e.target.checked)}
+              />
+              Exclude purely personal expenses
+            </label>
+          </div>
+        )}
+
+        <button className="btn btn-fill" onClick={handleGenerate} disabled={loading || !canGenerate}>
           {loading ? <span className="spinner spinner-white" /> : '↓'}
           {loading ? 'Generating…' : 'Generate Report'}
         </button>
@@ -96,7 +149,11 @@ export default function ReportView() {
 
       {!markdown && !loading && (
         <div className="report-empty">
-          <p>Enter a trip name and click <strong>Generate Report</strong>.</p>
+          <p>
+            {reportMode === 'personal' && !personalMember
+              ? 'Select a member, then click Generate Report.'
+              : 'Click Generate Report to render and download your expense report.'}
+          </p>
         </div>
       )}
     </div>
