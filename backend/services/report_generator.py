@@ -130,33 +130,49 @@ def _filter_expenses(
     personal_member: str | None,
     exclude_personal_expenses: bool,
 ):
-    """Return filtered expense list and personal-mode stats dict."""
+    """Return expense list with amounts adjusted for the report mode.
+
+    In personal mode each expense's amount is replaced by the member's
+    allocated share (from data.allocations) rather than the full expense
+    total, so every figure in the report reflects what that person owes.
+    """
     expenses = [e for e in data.expenses if not e.is_reimbursement]
 
     if report_mode == "personal" and personal_member:
         all_expense_ids = {e.entry_id for e in expenses}
-        member_entry_ids = {
-            a.entry_id for a in data.allocations
+
+        # Build share lookup: entry_id → member's share amount
+        share_map: dict[int, float] = {
+            a.entry_id: a.share
+            for a in data.allocations
             if a.participant == personal_member and a.entry_id in all_expense_ids
         }
+
         if exclude_personal_expenses:
             alloc_count = Counter(
                 a.entry_id for a in data.allocations if a.entry_id in all_expense_ids
             )
-            member_entry_ids = {eid for eid in member_entry_ids if alloc_count[eid] > 1}
-        expenses = [e for e in expenses if e.entry_id in member_entry_ids]
+            share_map = {eid: s for eid, s in share_map.items() if alloc_count[eid] > 1}
+
+        # Keep only expenses this member participates in, with amount = their share
+        expenses = [
+            e.model_copy(update={"amount": share_map[e.entry_id]})
+            for e in expenses
+            if e.entry_id in share_map
+        ]
 
     return expenses
 
 
 def _personal_stats(data: ParsedData, personal_member: str) -> dict:
-    """Compute global comparison stats for a member."""
+    """Compute global comparison stats for a member (using real allocation shares)."""
     all_expenses = [e for e in data.expenses if not e.is_reimbursement]
     all_ids = {e.entry_id for e in all_expenses}
     global_total = sum(e.amount for e in all_expenses)
     n_members = max(len(data.members), 1)
     global_per_person = global_total / n_members
     personal_paid = sum(e.amount for e in all_expenses if e.payer == personal_member)
+    # Use actual allocation shares (not a naive split) for the member's real total
     personal_share = sum(
         a.share for a in data.allocations
         if a.participant == personal_member and a.entry_id in all_ids
