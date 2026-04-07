@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from './store/appStore';
+import { saveSettings } from './api/client';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import UploadStep from './components/UploadStep/UploadStep';
 import AIControls from './components/AIControls/AIControls';
@@ -30,9 +31,14 @@ function useTheme() {
 }
 
 export default function App() {
-  const { currentStep, uploadSummary, setStep, error, setError } = useAppStore();
+  const { currentStep, uploadSummary, setStep, error, setError, settings } = useAppStore();
   const [theme, toggleTheme] = useTheme();
   const stepIndex = STEPS.findIndex(s => s.id === currentStep);
+
+  // On startup, push persisted settings to backend so it stays in sync with localStorage
+  useEffect(() => {
+    saveSettings(settings).catch(() => {});
+  }, []);
 
   return (
     <div className="app">

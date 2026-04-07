@@ -58,7 +58,7 @@ export default function SettingsPanel() {
                 <input
                   type="password"
                   placeholder="sk-ant-…"
-                  value={settings.claude_api_key === '***set***' ? '' : settings.claude_api_key}
+                  value={settings.claude_api_key}
                   onChange={e => handleChange({ claude_api_key: e.target.value })}
                 />
               </div>
@@ -80,7 +80,7 @@ export default function SettingsPanel() {
                 <input
                   type="password"
                   placeholder="sk-…"
-                  value={settings.openai_api_key === '***set***' ? '' : settings.openai_api_key}
+                  value={settings.openai_api_key}
                   onChange={e => handleChange({ openai_api_key: e.target.value })}
                 />
               </div>
