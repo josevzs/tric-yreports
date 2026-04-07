@@ -24,7 +24,7 @@
   position: absolute;
   right: 0;
   top: calc(100% + 2px);
-  width: 300px;
+  width: 320px;
   background: var(--white);
   border: 2px solid var(--black);
   z-index: 200;
@@ -83,17 +83,45 @@
 .provider-option.active { background: var(--black); color: var(--white); }
 .provider-option input { display: none; }
 
-.settings-fields {
-  padding: 12px 14px;
+.settings-all-providers {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+}
+
+.settings-provider-block {
+  border-top: var(--border);
+  opacity: 0.45;
+  transition: opacity 0.1s;
+}
+
+.settings-provider-block.active {
+  opacity: 1;
+}
+
+.settings-provider-label {
+  padding: 6px 14px 2px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+}
+
+.settings-provider-block.active .settings-provider-label {
+  color: var(--black);
+}
+
+.settings-fields {
+  padding: 4px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .settings-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .settings-field label {
@@ -106,5 +134,5 @@
 .settings-field input,
 .settings-field select {
   font-size: 12px;
-  padding: 7px 8px;
+  padding: 6px 8px;
 }

@@ -10,11 +10,9 @@ export default function SettingsPanel() {
   const { settings, setSettings } = useAppStore();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Settings are persisted in localStorage by the zustand store.
-  // We still write to the backend so it has keys for AI calls.
   function handleChange(patch: Partial<ProviderSettings>) {
     const next = { ...settings, ...patch };
-    setSettings(next);  // immediately saved to localStorage via zustand persist
+    setSettings(next);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
@@ -46,76 +44,84 @@ export default function SettingsPanel() {
                   checked={settings.provider === p}
                   onChange={() => handleChange({ provider: p })}
                 />
-                <span>{p === 'ollama' ? 'Local (Ollama)' : p === 'claude' ? 'Claude' : 'OpenAI'}</span>
+                <span>{p === 'ollama' ? 'Ollama' : p === 'claude' ? 'Claude' : 'OpenAI'}</span>
               </label>
             ))}
           </div>
 
-          {settings.provider === 'claude' && (
-            <div className="settings-fields">
-              <div className="settings-field">
-                <label>API KEY</label>
-                <input
-                  type="password"
-                  placeholder="sk-ant-…"
-                  value={settings.claude_api_key}
-                  onChange={e => handleChange({ claude_api_key: e.target.value })}
-                />
-              </div>
-              <div className="settings-field">
-                <label>MODEL</label>
-                <select value={settings.claude_model} onChange={e => handleChange({ claude_model: e.target.value })}>
-                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-                  <option value="claude-opus-4-6">claude-opus-4-6</option>
-                  <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
-                </select>
-              </div>
-            </div>
-          )}
+          {/* All provider fields always visible — just the active section is highlighted */}
+          <div className="settings-all-providers">
 
-          {settings.provider === 'openai' && (
-            <div className="settings-fields">
-              <div className="settings-field">
-                <label>API KEY</label>
-                <input
-                  type="password"
-                  placeholder="sk-…"
-                  value={settings.openai_api_key}
-                  onChange={e => handleChange({ openai_api_key: e.target.value })}
-                />
-              </div>
-              <div className="settings-field">
-                <label>MODEL</label>
-                <select value={settings.openai_model} onChange={e => handleChange({ openai_model: e.target.value })}>
-                  <option value="gpt-4o-mini">gpt-4o-mini</option>
-                  <option value="gpt-4o">gpt-4o</option>
-                  <option value="gpt-4-turbo">gpt-4-turbo</option>
-                </select>
+            <div className={`settings-provider-block ${settings.provider === 'openai' ? 'active' : ''}`}>
+              <div className="settings-provider-label">OpenAI</div>
+              <div className="settings-fields">
+                <div className="settings-field">
+                  <label>API KEY</label>
+                  <input
+                    type="password"
+                    placeholder="sk-…"
+                    value={settings.openai_api_key}
+                    onChange={e => handleChange({ openai_api_key: e.target.value })}
+                  />
+                </div>
+                <div className="settings-field">
+                  <label>MODEL</label>
+                  <select value={settings.openai_model} onChange={e => handleChange({ openai_model: e.target.value })}>
+                    <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
+                  </select>
+                </div>
               </div>
             </div>
-          )}
 
-          {settings.provider === 'ollama' && (
-            <div className="settings-fields">
-              <div className="settings-field">
-                <label>BASE URL</label>
-                <input
-                  type="text"
-                  value={settings.ollama_base_url}
-                  onChange={e => handleChange({ ollama_base_url: e.target.value })}
-                />
-              </div>
-              <div className="settings-field">
-                <label>MODEL</label>
-                <input
-                  type="text"
-                  value={settings.ollama_model}
-                  onChange={e => handleChange({ ollama_model: e.target.value })}
-                  placeholder="llama3.2"
-                />
+            <div className={`settings-provider-block ${settings.provider === 'claude' ? 'active' : ''}`}>
+              <div className="settings-provider-label">Claude</div>
+              <div className="settings-fields">
+                <div className="settings-field">
+                  <label>API KEY</label>
+                  <input
+                    type="password"
+                    placeholder="sk-ant-…"
+                    value={settings.claude_api_key}
+                    onChange={e => handleChange({ claude_api_key: e.target.value })}
+                  />
+                </div>
+                <div className="settings-field">
+                  <label>MODEL</label>
+                  <select value={settings.claude_model} onChange={e => handleChange({ claude_model: e.target.value })}>
+                    <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+                    <option value="claude-opus-4-6">claude-opus-4-6</option>
+                    <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+                  </select>
+                </div>
               </div>
             </div>
-          )}
+
+            <div className={`settings-provider-block ${settings.provider === 'ollama' ? 'active' : ''}`}>
+              <div className="settings-provider-label">Ollama (local)</div>
+              <div className="settings-fields">
+                <div className="settings-field">
+                  <label>BASE URL</label>
+                  <input
+                    type="text"
+                    value={settings.ollama_base_url}
+                    onChange={e => handleChange({ ollama_base_url: e.target.value })}
+                  />
+                </div>
+                <div className="settings-field">
+                  <label>MODEL</label>
+                  <input
+                    type="text"
+                    value={settings.ollama_model}
+                    onChange={e => handleChange({ ollama_model: e.target.value })}
+                    placeholder="llama3.2"
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
     </div>
