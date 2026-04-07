@@ -174,16 +174,27 @@ export const useAppStore = create<AppState>()(
         currentStep: 'upload',
         isLoadingAI: false,
         error: null,
-        // settings and lastRegistryInput intentionally NOT reset — keep them cached
+        // settings, lastRegistryInput intentionally NOT reset
       }),
     }),
     {
       name: 'tricountreport',
       storage: createJSONStorage(() => localStorage),
-      // Only persist settings and last inputs — session data is backend-managed
       partialize: (state) => ({
+        // Provider settings + cached inputs
         settings: state.settings,
         lastRegistryInput: state.lastRegistryInput,
+        // Full session state — survives page reloads
+        sessionId: state.sessionId,
+        uploadSummary: state.uploadSummary,
+        currentStep: state.currentStep,
+        expenses: state.expenses,
+        members: state.members,
+        balances: state.balances,
+        allCategories: state.allCategories,
+        customCategories: state.customCategories,
+        suggestions: state.suggestions,
+        newCategoriesProposed: state.newCategoriesProposed,
       }),
     },
   ),
