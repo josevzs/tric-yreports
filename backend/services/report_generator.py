@@ -8,44 +8,99 @@ from backend.models import ParsedData
 
 
 # ─────────────────────────────────────────────
-#  PDF text safety: Helvetica covers Latin-1 only.
-#  Transliterate accented Latin via NFD and map
-#  Greek (and a handful of other scripts) to their
-#  closest Latin phonetic equivalents.
+#  Font setup
+#
+#  ReportLab's built-in Helvetica uses WinAnsiEncoding (Latin-1 only).
+#  Greek characters sit at U+0391+ and are outside that range entirely.
+#  We register Arial (metrically identical to Helvetica, ships on every
+#  Windows install) as a Unicode TTF so Greek renders natively.
+#  If no suitable TTF is found we fall back to the built-in Helvetica
+#  and strip non-Latin-1 characters via _pdf_safe().
 # ─────────────────────────────────────────────
 
-# Greek → Latin transliteration (strict 1-to-1).
-# Η/η → E/e, Θ/θ → T/t, Ξ/ξ → X/x, Χ/χ → X/x, Ψ/ψ → P/p, Ω/ω → O/o
-# σ and ς both → s; accents stripped to base letter.
-_GREEK_FROM = (
-    "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"   # 24 uppercase
-    "αβγδεζηθικλμνξοπρσςτυφχψω"  # 25 lowercase (includes both sigmas)
-    "ΆΈΉΊΌΎΏΪΫ"                   # 9 accented uppercase
-    "άέήίόύώϊϋΐΰ"                 # 11 accented lowercase
+_PDF_FONT = "Helvetica"
+_PDF_FONT_BOLD = "Helvetica-Bold"
+_PDF_UNICODE = False   # True once a Unicode TTF is registered
+
+
+def _setup_pdf_fonts() -> None:
+    """Register a Unicode TTF under the names PDF_FONT / PDF_FONT_BOLD.
+
+    Called once at PDF generation time.  On Windows, Arial is always
+    present and is metrically equivalent to Helvetica.
+    """
+    global _PDF_FONT, _PDF_FONT_BOLD, _PDF_UNICODE
+    if _PDF_UNICODE:
+        return
+
+    import os
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    candidates = [
+        # Windows — Arial (metrically identical to Helvetica)
+        ("C:/Windows/Fonts/arial.ttf",   "C:/Windows/Fonts/arialbd.ttf"),
+        # macOS — Arial
+        ("/Library/Fonts/Arial.ttf",      "/Library/Fonts/Arial Bold.ttf"),
+        # macOS — Helvetica Neue TTF (sometimes present)
+        ("/Library/Fonts/Helvetica Neue.ttf", "/Library/Fonts/Helvetica Neue Bold.ttf"),
+        # Linux — Noto Sans (wide Unicode coverage)
+        ("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+         "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"),
+        # Linux — DejaVu Sans
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+    ]
+
+    for reg_path, bold_path in candidates:
+        if not os.path.exists(reg_path):
+            continue
+        try:
+            pdfmetrics.registerFont(TTFont("_TRRegular", reg_path))
+            if os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont("_TRBold", bold_path))
+            else:
+                pdfmetrics.registerFont(TTFont("_TRBold", reg_path))
+            _PDF_FONT = "_TRRegular"
+            _PDF_FONT_BOLD = "_TRBold"
+            _PDF_UNICODE = True
+            return
+        except Exception:
+            continue
+    # No TTF found — fall back to built-in Helvetica with _pdf_safe() sanitising text
+
+
+# ── Accented Greek → unaccented Greek ──
+# (used only in the Latin-1 fallback path so Greek base letters stay Greek)
+_GREEK_ACCENTED = str.maketrans(
+    "ΆΈΉΊΌΎΏΪΫάέήίόύώϊϋΐΰ",
+    "ΑΕΗΙΟΥΩΙΥαεηιουωιυιυ",
 )
-_GREEK_TO = (
-    "ABGDEZETIKLMNXOPRSTYFXPO"    # 24
-    "abgdezetiklmnxoprss tyfxpo"  # 26 raw — strip the space below
-    "AEEIOYOIY"                   # 9
-    "aeeioyoiyiy"                 # 11
+# Plain Greek → nearest Latin phonetic (last-resort fallback only)
+_GREEK_TO_LATIN = str.maketrans(
+    "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρσςτυφχψω",
+    "ABGDEZETIKLMNXOPRSTYFXPOabgdezetiklmnxoprsst yfxpo".replace(" ", ""),
 )
-_GREEK = str.maketrans(_GREEK_FROM, _GREEK_TO.replace(" ", ""))
 
 
 def _pdf_safe(text: str) -> str:
-    """Return a string safe to render with Helvetica (Latin-1 subset).
+    """Sanitise text for Helvetica (Latin-1) when no Unicode TTF is available.
 
-    1. Greek → phonetic Latin via translation table.
-    2. Accented Latin → strip combining marks via NFD decomposition.
-    3. Any remaining non-Latin-1 character → '?'.
+    1. Accented Greek → unaccented Greek base (ά→α keeps it Greek).
+    2. Plain Greek → nearest Latin phonetic (Α→A, only if still unencodable).
+    3. Accented Latin → base letter via NFD (é→e, ñ→n).
+    4. Any remaining non-Latin-1 character → '?'.
     """
-    text = text.translate(_GREEK)
-    # NFD splits e.g. é → e + combining acute; keep only base characters
+    if _PDF_UNICODE:
+        return text  # TTF registered — no sanitisation needed
+
+    text = text.translate(_GREEK_ACCENTED)
+    text = text.translate(_GREEK_TO_LATIN)
     decomposed = unicodedata.normalize("NFD", text)
     out = []
     for ch in decomposed:
         if unicodedata.category(ch) == "Mn":
-            continue  # drop combining marks
+            continue
         try:
             ch.encode("latin-1")
             out.append(ch)
@@ -255,6 +310,8 @@ def generate_pdf(
     personal_member: str | None = None,
     exclude_personal_expenses: bool = False,
 ) -> bytes:
+    _setup_pdf_fonts()
+
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -263,9 +320,7 @@ def generate_pdf(
         SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak,
     )
 
-    # All user-supplied strings must be passed through _pdf_safe() so that
-    # characters outside Helvetica's Latin-1 encoding are transliterated.
-    S = _pdf_safe  # shorthand
+    S = _pdf_safe  # sanitise user strings when falling back to built-in Helvetica
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -280,19 +335,19 @@ def generate_pdf(
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         "TRTitle", parent=styles["Title"],
-        fontName="Helvetica-Bold", fontSize=20, spaceAfter=6,
+        fontName=_PDF_FONT_BOLD, fontSize=20, spaceAfter=6,
     )
     h2_style = ParagraphStyle(
         "TRH2", parent=styles["Heading2"],
-        fontName="Helvetica-Bold", fontSize=14, spaceBefore=12, spaceAfter=6,
+        fontName=_PDF_FONT_BOLD, fontSize=14, spaceBefore=12, spaceAfter=6,
     )
     h3_style = ParagraphStyle(
         "TRH3", parent=styles["Heading3"],
-        fontName="Helvetica-Bold", fontSize=11, spaceBefore=8, spaceAfter=4,
+        fontName=_PDF_FONT_BOLD, fontSize=11, spaceBefore=8, spaceAfter=4,
     )
     body_style = ParagraphStyle(
         "TRBody", parent=styles["Normal"],
-        fontName="Helvetica", fontSize=10,
+        fontName=_PDF_FONT, fontSize=10,
     )
 
     expenses = _filter_expenses(data, report_mode, personal_member, exclude_personal_expenses)
@@ -410,7 +465,7 @@ def _footer_canvas(canvas, doc):
     from reportlab.lib import colors as _colors
     from reportlab.lib.units import cm as _cm
     canvas.saveState()
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont(_PDF_FONT, 8)
     canvas.setFillColor(_colors.grey)
     canvas.drawRightString(
         doc.pagesize[0] - 2 * _cm,
@@ -426,13 +481,13 @@ def _summary_table_style(n_rows: int):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, 0), _PDF_FONT_BOLD),
+        ("FONTNAME", (0, 1), (-1, -1), _PDF_FONT),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
-        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), "Helvetica-Bold"),
+        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), _PDF_FONT_BOLD),
         ("BACKGROUND", (0, n_rows - 1), (-1, n_rows - 1), colors.HexColor("#e8e8e8")),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
@@ -449,8 +504,8 @@ def _balance_table_style(rows: list):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, 0), _PDF_FONT_BOLD),
+        ("FONTNAME", (0, 1), (-1, -1), _PDF_FONT),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
@@ -473,8 +528,8 @@ def _comparison_table_style(diff: float):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, 0), _PDF_FONT_BOLD),
+        ("FONTNAME", (0, 1), (-1, -1), _PDF_FONT),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
@@ -482,7 +537,7 @@ def _comparison_table_style(diff: float):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         # Last row is diff — colour it
         ("TEXTCOLOR", (1, -1), (1, -1), diff_color),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, -1), (-1, -1), _PDF_FONT_BOLD),
     ]
     for i in range(1, 6):
         if i % 2 == 0:
@@ -496,12 +551,12 @@ def _category_table_style(n_rows: int):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, 0), _PDF_FONT_BOLD),
+        ("FONTNAME", (0, 1), (-1, -1), _PDF_FONT),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("ALIGN", (3, 0), (3, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#dddddd")),
-        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), "Helvetica-Bold"),
+        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), _PDF_FONT_BOLD),
         ("BACKGROUND", (0, n_rows - 1), (-1, n_rows - 1), colors.HexColor("#e8e8e8")),
         ("TOPPADDING", (0, 0), (-1, -1), 3),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
