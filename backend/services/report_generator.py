@@ -1,4 +1,5 @@
 from __future__ import annotations
+import unicodedata
 from collections import defaultdict, Counter
 from datetime import datetime
 from io import BytesIO
@@ -7,53 +8,50 @@ from backend.models import ParsedData
 
 
 # ─────────────────────────────────────────────
-#  Unicode font registration (for PDF Greek support)
+#  PDF text safety: Helvetica covers Latin-1 only.
+#  Transliterate accented Latin via NFD and map
+#  Greek (and a handful of other scripts) to their
+#  closest Latin phonetic equivalents.
 # ─────────────────────────────────────────────
 
-_FONT_REGISTERED = False
-_BASE_FONT = "Helvetica"
-_BASE_FONT_BOLD = "Helvetica-Bold"
+# Greek → Latin transliteration (strict 1-to-1).
+# Η/η → E/e, Θ/θ → T/t, Ξ/ξ → X/x, Χ/χ → X/x, Ψ/ψ → P/p, Ω/ω → O/o
+# σ and ς both → s; accents stripped to base letter.
+_GREEK_FROM = (
+    "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"   # 24 uppercase
+    "αβγδεζηθικλμνξοπρσςτυφχψω"  # 25 lowercase (includes both sigmas)
+    "ΆΈΉΊΌΎΏΪΫ"                   # 9 accented uppercase
+    "άέήίόύώϊϋΐΰ"                 # 11 accented lowercase
+)
+_GREEK_TO = (
+    "ABGDEZETIKLMNXOPRSTYFXPO"    # 24
+    "abgdezetiklmnxoprss tyfxpo"  # 26 raw — strip the space below
+    "AEEIOYOIY"                   # 9
+    "aeeioyoiyiy"                 # 11
+)
+_GREEK = str.maketrans(_GREEK_FROM, _GREEK_TO.replace(" ", ""))
 
 
-def _register_fonts() -> None:
-    global _FONT_REGISTERED, _BASE_FONT, _BASE_FONT_BOLD
-    if _FONT_REGISTERED:
-        return
-    _FONT_REGISTERED = True
+def _pdf_safe(text: str) -> str:
+    """Return a string safe to render with Helvetica (Latin-1 subset).
 
-    import os
-    try:
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
-    except ImportError:
-        return
-
-    candidates = [
-        # Windows
-        ("C:/Windows/Fonts/arial.ttf",    "C:/Windows/Fonts/arialbd.ttf",  "TR-Regular", "TR-Bold"),
-        # macOS
-        ("/Library/Fonts/Arial.ttf",       "/Library/Fonts/Arial Bold.ttf", "TR-Regular", "TR-Bold"),
-        # Linux – Noto Sans
-        ("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-         "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",   "TR-Regular", "TR-Bold"),
-        # Linux – DejaVu
-        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "TR-Regular", "TR-Bold"),
-    ]
-
-    for reg_path, bold_path, name, bold_name in candidates:
-        if os.path.exists(reg_path):
-            try:
-                pdfmetrics.registerFont(TTFont(name, reg_path))
-                if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont(bold_name, bold_path))
-                else:
-                    bold_name = name
-                _BASE_FONT = name
-                _BASE_FONT_BOLD = bold_name
-                return
-            except Exception:
-                continue
+    1. Greek → phonetic Latin via translation table.
+    2. Accented Latin → strip combining marks via NFD decomposition.
+    3. Any remaining non-Latin-1 character → '?'.
+    """
+    text = text.translate(_GREEK)
+    # NFD splits e.g. é → e + combining acute; keep only base characters
+    decomposed = unicodedata.normalize("NFD", text)
+    out = []
+    for ch in decomposed:
+        if unicodedata.category(ch) == "Mn":
+            continue  # drop combining marks
+        try:
+            ch.encode("latin-1")
+            out.append(ch)
+        except (UnicodeEncodeError, ValueError):
+            out.append("?")
+    return "".join(out)
 
 
 # ─────────────────────────────────────────────
@@ -247,7 +245,7 @@ def generate_markdown(
 
 
 # ─────────────────────────────────────────────
-#  PDF  (ReportLab Platypus)
+#  PDF  (ReportLab Platypus) — Helvetica throughout
 # ─────────────────────────────────────────────
 
 def generate_pdf(
@@ -257,8 +255,6 @@ def generate_pdf(
     personal_member: str | None = None,
     exclude_personal_expenses: bool = False,
 ) -> bytes:
-    _register_fonts()
-
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -266,6 +262,10 @@ def generate_pdf(
     from reportlab.platypus import (
         SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak,
     )
+
+    # All user-supplied strings must be passed through _pdf_safe() so that
+    # characters outside Helvetica's Latin-1 encoding are transliterated.
+    S = _pdf_safe  # shorthand
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -280,26 +280,26 @@ def generate_pdf(
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         "TRTitle", parent=styles["Title"],
-        fontName=_BASE_FONT_BOLD, fontSize=20, spaceAfter=6,
+        fontName="Helvetica-Bold", fontSize=20, spaceAfter=6,
     )
     h2_style = ParagraphStyle(
         "TRH2", parent=styles["Heading2"],
-        fontName=_BASE_FONT_BOLD, fontSize=14, spaceBefore=12, spaceAfter=6,
+        fontName="Helvetica-Bold", fontSize=14, spaceBefore=12, spaceAfter=6,
     )
     h3_style = ParagraphStyle(
         "TRH3", parent=styles["Heading3"],
-        fontName=_BASE_FONT_BOLD, fontSize=11, spaceBefore=8, spaceAfter=4,
+        fontName="Helvetica-Bold", fontSize=11, spaceBefore=8, spaceAfter=4,
     )
     body_style = ParagraphStyle(
         "TRBody", parent=styles["Normal"],
-        fontName=_BASE_FONT, fontSize=10,
+        fontName="Helvetica", fontSize=10,
     )
 
     expenses = _filter_expenses(data, report_mode, personal_member, exclude_personal_expenses)
     dates = [e.date for e in expenses if e.date]
     date_from = min(dates).strftime("%d %b %Y") if dates else "?"
     date_to   = max(dates).strftime("%d %b %Y") if dates else "?"
-    members_str = ", ".join(m.member_name for m in data.members)
+    members_str = ", ".join(S(m.member_name) for m in data.members)
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     totals = _category_totals(expenses)
@@ -308,26 +308,26 @@ def generate_pdf(
     story = []
 
     # ── Header ──
-    story.append(Paragraph(trip_name, title_style))
+    story.append(Paragraph(S(trip_name), title_style))
     if report_mode == "personal" and personal_member:
-        story.append(Paragraph(f"<b>Report for:</b> {personal_member}", body_style))
+        story.append(Paragraph(f"<b>Report for:</b> {S(personal_member)}", body_style))
         if exclude_personal_expenses:
             story.append(Paragraph("(Purely personal expenses excluded)", body_style))
     else:
         story.append(Paragraph(f"<b>Participants:</b> {members_str}", body_style))
-    story.append(Paragraph(f"<b>Period:</b> {date_from} – {date_to}", body_style))
+    story.append(Paragraph(f"<b>Period:</b> {date_from} - {date_to}", body_style))
     story.append(Paragraph(f"<b>Generated:</b> {now}", body_style))
     story.append(Spacer(1, 0.5 * cm))
 
     # ── Summary table ──
     story.append(Paragraph("Summary by Category", h2_style))
 
-    header = ["Category", "Amount (€)", "%", "# Items"]
+    header = ["Category", "Amount (EUR)", "%", "# Items"]
     rows = [header]
     for cat, total in sorted(totals.items(), key=lambda x: -x[1]):
         pct = (total / grand_total * 100) if grand_total else 0
         count = sum(1 for e in expenses if e.category == cat)
-        rows.append([cat, f"{total:,.2f}", f"{pct:.1f}%", str(count)])
+        rows.append([S(cat), f"{total:,.2f}", f"{pct:.1f}%", str(count)])
     rows.append(["TOTAL", f"{grand_total:,.2f}", "100%", str(len(expenses))])
 
     col_widths = [9 * cm, 3.5 * cm, 2 * cm, 2 * cm]
@@ -342,12 +342,13 @@ def generate_pdf(
         stats = _personal_stats(data, personal_member)
         diff = stats["diff_from_avg"]
         sign = "+" if diff >= 0 else ""
+        pm = S(personal_member)
         comp_rows = [
-            ["Metric", "Amount (€)"],
+            ["Metric", "Amount (EUR)"],
             ["Global trip total", f"{stats['global_total']:,.2f}"],
             [f"Fair share per person ({stats['n_members']} members)", f"{stats['global_per_person']:,.2f}"],
-            [f"{personal_member} — total paid", f"{stats['personal_paid']:,.2f}"],
-            [f"{personal_member} — allocated share", f"{stats['personal_share']:,.2f}"],
+            [f"{pm} - total paid", f"{stats['personal_paid']:,.2f}"],
+            [f"{pm} - allocated share", f"{stats['personal_share']:,.2f}"],
             ["Difference from fair share", f"{sign}{abs(diff):,.2f}"],
         ]
         comp_tbl = Table(comp_rows, colWidths=[10 * cm, 3.5 * cm])
@@ -363,13 +364,13 @@ def generate_pdf(
             paid_by[e.payer] += e.amount
         share_per = grand_total / len(data.members) if data.members else 0
 
-        bal_header = ["Participant", "Paid (€)", "Fair Share (€)", "Balance (€)"]
+        bal_header = ["Participant", "Paid (EUR)", "Fair Share (EUR)", "Balance (EUR)"]
         bal_rows = [bal_header]
         for b in data.balances:
             paid = paid_by.get(b.member, 0.0)
             bal = paid - share_per
             sign = "+" if bal >= 0 else ""
-            bal_rows.append([b.member, f"{paid:,.2f}", f"{share_per:,.2f}", f"{sign}{bal:,.2f}"])
+            bal_rows.append([S(b.member), f"{paid:,.2f}", f"{share_per:,.2f}", f"{sign}{bal:,.2f}"])
 
         bal_tbl = Table(bal_rows, colWidths=[5 * cm, 3.5 * cm, 4 * cm, 4 * cm])
         bal_tbl.setStyle(_balance_table_style(bal_rows))
@@ -387,13 +388,13 @@ def generate_pdf(
     for cat in sorted(by_cat.keys()):
         cat_expenses = sorted(by_cat[cat], key=lambda e: e.date)
         subtotal = sum(e.amount for e in cat_expenses)
-        story.append(Paragraph(cat, h3_style))
+        story.append(Paragraph(S(cat), h3_style))
 
-        cat_header = ["Date", "Description", "Paid by", "Amount (€)"]
+        cat_header = ["Date", "Description", "Paid by", "Amount (EUR)"]
         cat_rows = [cat_header]
         for e in cat_expenses:
             d = e.date.strftime("%d %b") if e.date else "?"
-            cat_rows.append([d, _truncate(e.description, 40), e.payer, f"{e.amount:,.2f}"])
+            cat_rows.append([d, S(_truncate(e.description, 40)), S(e.payer), f"{e.amount:,.2f}"])
         cat_rows.append(["", "Subtotal", "", f"{subtotal:,.2f}"])
 
         cat_tbl = Table(cat_rows, colWidths=[2.5 * cm, 8.5 * cm, 3 * cm, 2.5 * cm])
@@ -409,7 +410,7 @@ def _footer_canvas(canvas, doc):
     from reportlab.lib import colors as _colors
     from reportlab.lib.units import cm as _cm
     canvas.saveState()
-    canvas.setFont(_BASE_FONT, 8)
+    canvas.setFont("Helvetica", 8)
     canvas.setFillColor(_colors.grey)
     canvas.drawRightString(
         doc.pagesize[0] - 2 * _cm,
@@ -425,13 +426,13 @@ def _summary_table_style(n_rows: int):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), _BASE_FONT_BOLD),
-        ("FONTNAME", (0, 1), (-1, -1), _BASE_FONT),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
-        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), _BASE_FONT_BOLD),
+        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), "Helvetica-Bold"),
         ("BACKGROUND", (0, n_rows - 1), (-1, n_rows - 1), colors.HexColor("#e8e8e8")),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
@@ -448,8 +449,8 @@ def _balance_table_style(rows: list):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), _BASE_FONT_BOLD),
-        ("FONTNAME", (0, 1), (-1, -1), _BASE_FONT),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
@@ -472,8 +473,8 @@ def _comparison_table_style(diff: float):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), _BASE_FONT_BOLD),
-        ("FONTNAME", (0, 1), (-1, -1), _BASE_FONT),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#cccccc")),
@@ -481,7 +482,7 @@ def _comparison_table_style(diff: float):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         # Last row is diff — colour it
         ("TEXTCOLOR", (1, -1), (1, -1), diff_color),
-        ("FONTNAME", (0, -1), (-1, -1), _BASE_FONT_BOLD),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
     ]
     for i in range(1, 6):
         if i % 2 == 0:
@@ -495,12 +496,12 @@ def _category_table_style(n_rows: int):
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), _BASE_FONT_BOLD),
-        ("FONTNAME", (0, 1), (-1, -1), _BASE_FONT),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("ALIGN", (3, 0), (3, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#dddddd")),
-        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), _BASE_FONT_BOLD),
+        ("FONTNAME", (0, n_rows - 1), (-1, n_rows - 1), "Helvetica-Bold"),
         ("BACKGROUND", (0, n_rows - 1), (-1, n_rows - 1), colors.HexColor("#e8e8e8")),
         ("TOPPADDING", (0, 0), (-1, -1), 3),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
