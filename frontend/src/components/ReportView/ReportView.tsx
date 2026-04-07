@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { generateReport } from '../../api/client';
 import { useAppStore } from '../../store/appStore';
 import './ReportView.css';
@@ -139,7 +140,7 @@ export default function ReportView() {
         <div className="report-content">
           {view === 'preview' ? (
             <div className="md-preview">
-              <ReactMarkdown>{markdown}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
             </div>
           ) : (
             <pre className="md-raw">{markdown}</pre>
