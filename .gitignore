@@ -1,0 +1,10 @@
+settings.json
+__pycache__/
+*.pyc
+*.pyo
+.env
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.egg-info/
+.DS_Store

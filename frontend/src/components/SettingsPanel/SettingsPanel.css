@@ -1,0 +1,110 @@
+.settings-wrapper { position: relative; }
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 20px;
+  border: none;
+  border-left: var(--border);
+  background: var(--white);
+  color: var(--black);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.1s;
+}
+
+.settings-toggle:hover { background: var(--gray-100); }
+
+.settings-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 2px);
+  width: 300px;
+  background: var(--white);
+  border: 2px solid var(--black);
+  z-index: 200;
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: var(--border);
+  background: var(--black);
+}
+
+.settings-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--white);
+}
+
+.settings-close {
+  background: transparent;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.provider-grid {
+  display: flex;
+  border-bottom: var(--border);
+}
+
+.provider-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-right: var(--border);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  transition: background 0.1s, color 0.1s;
+}
+
+.provider-option:last-child { border-right: none; }
+.provider-option:hover { background: var(--gray-100); color: var(--black); }
+.provider-option.active { background: var(--black); color: var(--white); }
+.provider-option input { display: none; }
+
+.settings-fields {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-field label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--gray-600);
+}
+
+.settings-field input,
+.settings-field select {
+  font-size: 12px;
+  padding: 7px 8px;
+}

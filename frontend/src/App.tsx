@@ -1,0 +1,69 @@
+import { useAppStore } from './store/appStore';
+import SettingsPanel from './components/SettingsPanel/SettingsPanel';
+import UploadStep from './components/UploadStep/UploadStep';
+import AIControls from './components/AIControls/AIControls';
+import ExpenseTable from './components/ExpenseTable/ExpenseTable';
+import ReportView from './components/ReportView/ReportView';
+import type { AppStep } from './types';
+import './App.css';
+
+const STEPS: { id: AppStep; label: string }[] = [
+  { id: 'upload',     label: '01 — Load' },
+  { id: 'categorize', label: '02 — Categorize' },
+  { id: 'review',     label: '03 — Review' },
+  { id: 'report',     label: '04 — Report' },
+];
+
+export default function App() {
+  const { currentStep, uploadSummary, setStep, error, setError } = useAppStore();
+  const stepIndex = STEPS.findIndex(s => s.id === currentStep);
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <div className="header-brand">
+          <h1>TricountReport</h1>
+          {uploadSummary && (
+            <span className="session-info">
+              {uploadSummary.expense_count} exp · {uploadSummary.total_amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {uploadSummary.currency}
+            </span>
+          )}
+        </div>
+        <div className="header-right">
+          <SettingsPanel />
+        </div>
+      </header>
+
+      <nav className="step-nav">
+        {STEPS.map((step, i) => {
+          const isActive = currentStep === step.id;
+          const isCompleted = stepIndex > i;
+          return (
+            <button
+              key={step.id}
+              className={`step-btn ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+              onClick={() => (isCompleted || isActive) && setStep(step.id)}
+              disabled={!isCompleted && !isActive}
+            >
+              {step.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {error && (
+        <div className="global-error">
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
+      <main className="app-main">
+        {currentStep === 'upload'     && <UploadStep />}
+        {currentStep === 'categorize' && <AIControls />}
+        {currentStep === 'review'     && <ExpenseTable />}
+        {currentStep === 'report'     && <ReportView />}
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,148 @@
+.ai-controls {
+  max-width: 900px;
+  margin: 0 auto;
+  border: var(--border);
+  margin-top: 32px;
+}
+
+.ai-section {
+  border-bottom: var(--border);
+  padding: 20px 24px;
+}
+
+.ai-section:last-child { border-bottom: none; }
+
+/* ── Section header ─── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--black);
+}
+
+.section-actions { display: flex; gap: 8px; }
+
+/* ── Category chips ─── */
+.cat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cat-chip {
+  padding: 5px 12px;
+  border: var(--border);
+  background: var(--white);
+  color: var(--gray-400);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.1s, color 0.1s;
+}
+
+.cat-chip:hover { background: var(--gray-100); color: var(--black); }
+.cat-chip.active { background: var(--black); color: var(--white); }
+.cat-chip.custom { border-style: dashed; }
+
+.cat-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cat-add-row input { flex: 1; }
+
+.cat-hint {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-family: var(--mono);
+}
+
+/* ── Stats ─── */
+.ai-stats-row {
+  display: flex;
+  gap: 0;
+}
+
+.stat-cell {
+  flex: 1;
+  border-right: var(--border);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-cell:last-child { border-right: none; }
+
+.stat-n {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-family: var(--mono);
+}
+
+.stat-l {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+}
+
+/* ── Progress ─── */
+.ai-progress { display: flex; flex-direction: column; gap: 8px; padding: 16px 24px; }
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--gray-600);
+}
+
+/* ── Actions ─── */
+.ai-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── New cats ─── */
+.ai-new-cats { display: flex; flex-direction: column; gap: 10px; }
+
+.new-cats-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.new-cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: var(--border);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.new-cat-tag button {
+  background: transparent;
+  border: none;
+  border-left: var(--border);
+  padding: 0 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--black);
+  margin-left: 4px;
+  transition: background 0.1s;
+}
+
+.new-cat-tag button:hover { background: var(--black); color: var(--white); }

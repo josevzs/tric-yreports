@@ -1,0 +1,98 @@
+/* ── App shell ───────────────────────────── */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ──────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid var(--black);
+  height: 52px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  border-right: var(--border);
+}
+
+.header-brand h1 {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.session-info {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ── Step nav ────────────────────────────── */
+.step-nav {
+  display: flex;
+  border-bottom: var(--border);
+  overflow-x: auto;
+}
+
+.step-btn {
+  padding: 0 24px;
+  height: 44px;
+  border: none;
+  border-right: var(--border);
+  background: var(--white);
+  color: var(--gray-400);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+  position: relative;
+}
+
+.step-btn:last-child { border-right: none; }
+.step-btn:hover:not(:disabled) { background: var(--gray-100); color: var(--black); }
+.step-btn.active { background: var(--black); color: var(--white); }
+.step-btn.completed { color: var(--black); }
+.step-btn.completed::after {
+  content: '✓';
+  margin-left: 6px;
+  font-size: 10px;
+}
+.step-btn:disabled { cursor: not-allowed; }
+
+/* ── Global error ────────────────────────── */
+.global-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: var(--border);
+  background: var(--black);
+  color: var(--white);
+  font-size: 13px;
+}
+
+.global-error button {
+  background: transparent;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+/* ── Main ────────────────────────────────── */
+.app-main { flex: 1; }
