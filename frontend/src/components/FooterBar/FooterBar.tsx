@@ -195,6 +195,25 @@ function LegalPage() {
         decisions.
       </p>
 
+      <h4>Affiliate &amp; referral links</h4>
+      <p>
+        This site contains one referral link to N26 (a banking product). If you open an
+        account through that link, both the site author and you receive a small bonus from
+        N26's referral programme.
+      </p>
+      <p>
+        The recommendation is based solely on the author's personal experience as a traveler
+        over several years. There is no sponsorship, paid partnership, or commercial
+        arrangement of any kind with N26 or any of its affiliates. The author's opinion is
+        entirely independent.
+      </p>
+      <p>
+        In accordance with EU Directive 2005/29/EC on unfair commercial practices and the
+        FTC guidelines on endorsements and testimonials: the existence of the referral bonus
+        is disclosed. The recommendation reflects genuine personal use and is not
+        influenced by the referral arrangement.
+      </p>
+
       <h4>Open source</h4>
       <p>
         Source code is available on{' '}
@@ -258,8 +277,13 @@ export default function FooterBar() {
             <strong>Stop losing money on currency exchange.</strong><br />
             N26 uses the official Mastercard rate — no markup, no surprises.
             Withdraw cash for free almost anywhere in the world.<br /><br />
-            Perfect for trips like the ones you're reporting here.
-            Open an account with this link and we both get a small bonus.
+            I've used it for years as a traveler and honestly it's the one thing
+            I recommend to everyone before a trip. No sponsorship, no deal —
+            just a card that doesn't screw you on rates.<br /><br />
+            Open with this link and we both get a small bonus.
+            <em className="fb-n26-disclaimer">
+              Referral link — I get a bonus if you sign up. My opinion is my own.
+            </em>
           </span>
         </a>
       </footer>

@@ -83,6 +83,16 @@
   margin-bottom: 6px;
 }
 
+.fb-n26-disclaimer {
+  display: block;
+  margin-top: 10px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  font-style: italic;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 8px;
+}
+
 .fb-n26-tooltip::before {
   content: '';
   display: block;
