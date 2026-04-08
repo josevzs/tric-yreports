@@ -6,6 +6,7 @@ import UploadStep from './components/UploadStep/UploadStep';
 import AIControls from './components/AIControls/AIControls';
 import ExpenseTable from './components/ExpenseTable/ExpenseTable';
 import ReportView from './components/ReportView/ReportView';
+import FooterBar from './components/FooterBar/FooterBar';
 import type { AppStep } from './types';
 import './App.css';
 
@@ -93,6 +94,8 @@ export default function App() {
         {currentStep === 'review'     && <ExpenseTable />}
         {currentStep === 'report'     && <ReportView />}
       </main>
+
+      <FooterBar />
     </div>
   );
 }

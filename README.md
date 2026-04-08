@@ -1,17 +1,19 @@
 # TricountReport
 
-A local webapp for generating expense reports from Tricount data, with AI-powered auto-categorization.
+A webapp for generating expense reports from Tricount data, with AI-powered auto-categorization.
 
 ## Features
 
-- **Load data** from a Tricount `.xlsx` export or directly from the Tricount API (just the registry ID)
+- **Load data** from a Tricount `.xlsx` export or directly from the Tricount API (registry ID or share link)
 - **AI auto-categorization** with Claude, OpenAI, or local Ollama
-- **Manual review & correction** with confidence badges
-- **Report generation** in Markdown and PDF with totals by category
+- **Manual review & correction** with confidence badges and per-column filters
+- **Global & personal reports** — full group totals or one member's allocation share
+- **Report generation** in Markdown and PDF with totals by category and balance sheet
+- **Dark / light theme**, session persistence across page reloads
 
 ## Prerequisites
 
-- **Python 3.14** via the `tricount` conda environment (`conda env create -n tricount`)
+- **Python 3.11+** (3.14 required only if you use the Tricount direct-fetch feature)
 - **Node.js 18+** and npm
 
 ## Setup
@@ -19,14 +21,12 @@ A local webapp for generating expense reports from Tricount data, with AI-powere
 ### Backend
 
 ```bash
-# Activate the tricount conda environment
+# (Optional) activate your virtualenv / conda env
 conda activate tricount
 
-# Install dependencies
 pip install -r backend/requirements.txt
 
-# Start the API server
-cd "TricountReport"
+# From the repo root
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 
@@ -42,42 +42,51 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ## Configuration
 
-On first run, click the **⚙️ Settings** button in the top-right corner to configure your AI provider:
+Click the **⚙ Settings** button to configure your AI provider:
 
 | Provider | What you need |
 |----------|---------------|
-| **Ollama (local)** | [Ollama](https://ollama.com) running + a model pulled (e.g. `ollama pull llama3.2`) |
+| **Ollama (local)** | [Ollama](https://ollama.com) running + a model pulled (`ollama pull llama3.2`) |
 | **Claude** | Anthropic API key from [console.anthropic.com](https://console.anthropic.com) |
 | **OpenAI** | OpenAI API key from [platform.openai.com](https://platform.openai.com) |
 
 Settings are saved in `settings.json` (gitignored).
 
+For server deployments, API keys can be passed as environment variables instead:
+
+```
+OPENAI_API_KEY=sk-...
+CLAUDE_API_KEY=sk-ant-...
+OLLAMA_BASE_URL=http://localhost:11434
+AI_PROVIDER=openai
+ALLOWED_ORIGINS=https://yourdomain.com
+```
+
 ## Usage
 
-1. **Load Data** — Upload `data.xlsx` or enter a Tricount registry ID
-2. **AI Categorize** — Click "Auto-categorize with AI" to get suggestions
-3. **Review & Edit** — Correct any wrong categories in the table
-4. **Generate Report** — Set a trip name and download as `.md` or `.pdf`
+| Step | What to do |
+|------|-----------|
+| **01 — Load** | Upload `data.xlsx` or paste a Tricount share link / registry ID |
+| **02 — Categorize** | Click "Auto-categorize with AI", then apply high-confidence suggestions |
+| **03 — Review** | Correct any wrong categories; session survives page reloads |
+| **04 — Report** | Set trip name, choose Global or Personal mode, download `.md` / `.pdf` |
 
 ## Categories
 
-| Category | Description |
-|----------|-------------|
-| Estancias | Hotels, Airbnb, accommodation |
-| Alquiler de coches | Car rental |
-| Comidas y cenas | Restaurants, dinners, lunches |
-| Desayunos y cafés | Breakfast, coffee, bakeries |
-| Entradas | Museums, tours, entrance fees |
-| Gasolina | Fuel, gas stations |
-| Peajes | Tolls, highway fees |
-| Trenes | Trains |
-| Autobuses | Buses, metro |
-| Barcos y ferrys | Ferries, boats |
-| Aviones | Flights |
-| Gastos personales | Personal items, souvenirs |
-| Supermercado | Supermarkets, groceries |
-| Farmacia | Pharmacy |
-| Parking | Car parks |
-| Otros | Other / unclassified |
+```
+Estancias · Alquiler de coches · Comidas y cenas · Desayunos y cafés
+Entradas · Gasolina · Peajes · Trenes · Autobuses · Barcos y ferrys
+Aviones · Gastos personales · Supermercado · Farmacia · Parking
+Taxis · Tricount Close · Otros
+```
 
 The AI can also propose additional categories when needed.
+
+## Deploying on a server
+
+See `HOW_TO.md` (gitignored, local copy only) for a full step-by-step guide covering
+nginx, systemd, Let's Encrypt HTTPS, environment variables, and session storage.
+
+## Licence
+
+MIT

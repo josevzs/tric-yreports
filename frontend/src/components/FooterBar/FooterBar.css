@@ -1,0 +1,214 @@
+/* ── Footer bar ──────────────────────────────── */
+.footer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-top: var(--border);
+  height: 30px;
+  padding: 0 8px;
+  background: var(--white);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.fb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-right: var(--border-light);
+  color: var(--gray-600);
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.1s, background 0.1s;
+}
+
+.fb-link:last-child { border-right: none; }
+
+.fb-link:hover {
+  color: var(--black);
+  background: var(--gray-100);
+}
+
+/* ── Ko-Fi aside text ─────────────────────── */
+.fb-kofi-aside {
+  font-size: 9px;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--gray-400);
+  font-weight: 400;
+}
+
+.fb-link:hover .fb-kofi-aside { color: var(--gray-600); }
+
+/* ── N26 tooltip ─────────────────────────── */
+.fb-n26 { position: relative; }
+
+.fb-n26-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  padding: 10px 12px;
+  background: var(--black);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.5;
+  border: var(--border);
+  pointer-events: none;
+  z-index: 200;
+}
+
+.fb-n26-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--black);
+}
+
+.fb-n26:hover .fb-n26-tooltip { display: block; }
+
+/* ── Overlay ─────────────────────────────── */
+.fb-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 500;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+  overflow-y: auto;
+}
+
+.fb-overlay-panel {
+  position: relative;
+  background: var(--white);
+  color: var(--black);
+  border: 2px solid var(--black);
+  width: 100%;
+  max-width: 680px;
+  padding: 40px 48px 40px;
+}
+
+.fb-overlay-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: var(--border);
+  color: var(--black);
+  cursor: pointer;
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+}
+
+.fb-overlay-close:hover {
+  background: var(--black);
+  color: var(--white);
+}
+
+/* ── Overlay content typography ──────────── */
+.fb-overlay-content h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  border-bottom: 2px solid var(--black);
+  padding-bottom: 12px;
+}
+
+.fb-overlay-content h4 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 24px 0 8px;
+}
+
+.fb-overlay-content p {
+  font-size: 13px;
+  line-height: 1.65;
+  margin-bottom: 10px;
+  color: var(--gray-600);
+}
+
+.fb-overlay-content ul {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray-600);
+  padding-left: 18px;
+  margin-bottom: 10px;
+}
+
+.fb-overlay-content li { margin-bottom: 5px; }
+
+.fb-overlay-content code {
+  font-family: var(--mono);
+  font-size: 0.87em;
+  background: var(--gray-100);
+  padding: 1px 5px;
+  border: var(--border-light);
+}
+
+.fb-overlay-content a {
+  color: var(--black);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fb-overlay-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.fb-overlay-content th {
+  background: var(--black);
+  color: var(--white);
+  padding: 7px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.fb-overlay-content td {
+  padding: 7px 12px;
+  border-bottom: var(--border-light);
+  color: var(--gray-600);
+}
+
+/* ── Responsive ─────────────────────────── */
+@media (max-width: 600px) {
+  .fb-overlay-panel { padding: 28px 20px 28px; }
+  .fb-kofi-aside { display: none; }
+  .fb-n26-tooltip { width: 200px; }
+}
