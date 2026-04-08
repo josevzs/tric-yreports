@@ -37,7 +37,7 @@ export default function App() {
 
   // On startup, push persisted settings to backend so it stays in sync with localStorage
   useEffect(() => {
-    saveSettings(settings).catch(() => {});
+    saveSettings(settings).catch((err) => console.warn("Could not sync settings to backend:", err));
   }, []);
 
   return (

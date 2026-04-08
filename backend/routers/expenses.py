@@ -16,12 +16,19 @@ async def get_expenses(session_id: str):
 
 @router.patch("/expenses/{session_id}/{entry_id}", response_model=Expense)
 async def patch_expense(session_id: str, entry_id: int, body: PatchExpenseRequest):
-    expense = session_store.patch_expense_category(session_id, entry_id, body.category)
+    # Basic category validation
+    cat = body.category.strip()
+    if not cat:
+        raise HTTPException(status_code=400, detail="Category must not be empty")
+    if len(cat) > 100:
+        raise HTTPException(status_code=400, detail="Category name too long (max 100 characters)")
+
+    expense = session_store.patch_expense_category(session_id, entry_id, cat)
     if expense is None:
         raise HTTPException(status_code=404, detail="Session or expense not found")
     # Store as custom if not in presets
-    if body.category not in PRESET_CATEGORIES and body.category != "UNCATEGORIZED":
-        session_store.add_custom_category(session_id, body.category)
+    if cat not in PRESET_CATEGORIES and cat != "UNCATEGORIZED":
+        session_store.add_custom_category(session_id, cat)
     return expense
 
 

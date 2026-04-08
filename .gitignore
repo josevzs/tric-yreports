@@ -9,3 +9,4 @@ frontend/dist/
 frontend/.vite/
 *.egg-info/
 .DS_Store
+HOW_TO.md

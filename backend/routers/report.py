@@ -1,6 +1,14 @@
 import base64
+import re
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
+
+
+def _safe_filename(name: str) -> str:
+    """Remove path separators and shell-unsafe characters from a user-supplied filename."""
+    name = name.replace("/", "_").replace("\\", "_").replace("\0", "")
+    name = re.sub(r'[<>:"|?*]', "_", name)
+    return name.strip()[:100] or "Trip_Report"
 
 from backend.models import ReportRequest, ReportResponse
 from backend.services.report_generator import generate_markdown, generate_pdf
@@ -55,19 +63,20 @@ async def download_report(
         exclude_personal_expenses=exclude_personal_expenses,
     )
 
+    safe_name = _safe_filename(trip_name)
     if format == "md":
         content = generate_markdown(data, trip_name, **kwargs)
         return Response(
             content=content.encode("utf-8"),
             media_type="text/markdown",
-            headers={"Content-Disposition": f'attachment; filename="{trip_name}.md"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.md"'},
         )
     elif format == "pdf":
         pdf_bytes = generate_pdf(data, trip_name, **kwargs)
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{trip_name}.pdf"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
         )
     else:
         raise HTTPException(status_code=400, detail="Format must be 'md' or 'pdf'")

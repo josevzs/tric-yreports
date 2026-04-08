@@ -1,6 +1,9 @@
 import json
+import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+
+logger = logging.getLogger("tricountreport.categorize")
 
 from backend.models import (
     CategorizationRequest, CategorizationResponse,
@@ -20,9 +23,11 @@ async def run_categorization(body: CategorizationRequest):
         raise HTTPException(status_code=404, detail="Session not found")
 
     settings = load_settings()
+    logger.info("Categorizing %d expenses via %s", len(data.expenses), settings.provider)
     try:
         result = await categorize_expenses(data, settings, body.entry_ids)
     except Exception as e:
+        logger.exception("AI categorization failed")
         raise HTTPException(status_code=500, detail=f"AI categorization failed: {e}")
 
     for cat in result.new_categories_proposed:
@@ -49,7 +54,11 @@ async def stream_categorization(body: CategorizationRequest):
                     for cat in event.get("new_categories", []):
                         session_store.add_custom_category(body.session_id, cat)
         except Exception as e:
+            logger.exception("SSE categorization error")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        finally:
+            # Ensure the stream is properly terminated even if the client is buffering
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(
         generate(),

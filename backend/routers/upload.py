@@ -15,7 +15,11 @@ async def upload_file(file: UploadFile = File(...)):
     if not file.filename or not file.filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Only .xlsx files are accepted")
 
-    contents = await file.read()
+    MAX_BYTES = 50 * 1024 * 1024  # 50 MB
+    contents = await file.read(MAX_BYTES + 1)
+    if len(contents) > MAX_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 50 MB)")
+
     with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
         tmp.write(contents)
         tmp_path = Path(tmp.name)
