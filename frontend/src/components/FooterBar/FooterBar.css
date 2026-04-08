@@ -63,15 +63,16 @@
   right: 8px;
   width: 300px;
   padding: 14px 16px;
-  background: var(--black);
-  color: var(--white);
+  /* Always dark — must not invert with theme */
+  background: #111111;
+  color: #e8e8e8;
   font-size: 12px;
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
   line-height: 1.6;
   white-space: normal;
-  border: 1px solid #555;
+  border: 1px solid #444444;
   pointer-events: none;
   z-index: 200;
   transition: opacity 0.15s ease 0.08s, visibility 0.15s ease 0.08s;
@@ -81,15 +82,16 @@
   font-weight: 700;
   display: block;
   margin-bottom: 6px;
+  color: #ffffff;
 }
 
 .fb-n26-disclaimer {
   display: block;
   margin-top: 10px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(232, 232, 232, 0.45);
   font-style: italic;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(232, 232, 232, 0.2);
   padding-top: 8px;
 }
 
@@ -98,7 +100,7 @@
   display: block;
   width: 24px;
   height: 2px;
-  background: var(--white);
+  background: #e8e8e8;
   margin-bottom: 10px;
 }
 
