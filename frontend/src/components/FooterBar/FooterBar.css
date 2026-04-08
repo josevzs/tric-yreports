@@ -9,7 +9,11 @@
   background: var(--white);
   flex-shrink: 0;
   overflow: visible;
+  justify-content: space-between;
 }
+
+.fb-left { display: flex; align-items: center; height: 100%; }
+.fb-right { display: flex; align-items: center; height: 100%; margin-left: auto; }
 
 .fb-link {
   display: inline-flex;
@@ -32,7 +36,8 @@
   transition: color 0.1s, background 0.1s;
 }
 
-.fb-link:last-child { border-right: none; }
+.fb-right .fb-link:last-child { border-right: none; }
+.fb-left .fb-link:last-child { border-right: none; }
 
 .fb-link:hover {
   color: var(--black);

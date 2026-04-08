@@ -234,14 +234,17 @@ export default function FooterBar() {
   return (
     <>
       <footer className="footer-bar">
-        <button className="fb-link" onClick={() => setOverlay('howto')}>
-          How to use
-        </button>
+        <div className="fb-left">
+          <button className="fb-link" onClick={() => setOverlay('howto')}>
+            How to use
+          </button>
 
-        <button className="fb-link" onClick={() => setOverlay('legal')}>
-          Legal &amp; Privacy
-        </button>
+          <button className="fb-link" onClick={() => setOverlay('legal')}>
+            Legal &amp; Privacy
+          </button>
+        </div>
 
+        <div className="fb-right">
         <a
           className="fb-link fb-icon-link"
           href="https://github.com/josevzs/tric-yreports"
@@ -286,6 +289,7 @@ export default function FooterBar() {
             </em>
           </span>
         </a>
+        </div>
       </footer>
 
       {overlay === 'howto' && (
