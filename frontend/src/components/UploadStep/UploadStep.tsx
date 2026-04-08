@@ -70,11 +70,12 @@ export default function UploadStep() {
 
   return (
     <div className="upload-step">
+      <p className="upload-tagline">
+        Turn your Tricount export into a clean expense report — AI-categorized, PDF-ready.
+      </p>
+      <div className="upload-inner">
       <div className="upload-header">
         <span className="upload-label">LOAD DATA</span>
-        <p className="upload-tagline">
-          Turn your Tricount export into a clean expense report — AI-categorized, PDF-ready.
-        </p>
       </div>
 
       <div className="upload-tabs">
@@ -135,6 +136,7 @@ export default function UploadStep() {
           <span>Loading…</span>
         </div>
       )}
+      </div>
     </div>
   );
 }
