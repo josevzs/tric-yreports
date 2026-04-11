@@ -1,6 +1,70 @@
 from datetime import timezone
 
-from backend.models import ParsedData, Expense, Allocation, Member, Balance
+from backend.models import ParsedData, Expense, Allocation, Member, Balance, PRESET_CATEGORIES
+
+# Map Tricount/bunq category enum strings → our preset category names.
+# Tricount uses UPPER_SNAKE_CASE internally; values that don't appear here
+# are treated as custom categories and added to custom_categories.
+_TRICOUNT_CATEGORY_MAP: dict[str, str] = {
+    # Confirmed from live API
+    "FOOD_AND_DRINK":       "Comidas y cenas",
+    # Accommodation
+    "ACCOMMODATION":        "Estancias",
+    "HOTEL":                "Estancias",
+    # Transport — specific
+    "CAR_RENTAL":           "Alquiler de coches",
+    "FUEL":                 "Gasolina",
+    "GAS":                  "Gasolina",
+    "TOLL":                 "Peajes",
+    "TRAIN":                "Trenes",
+    "BUS":                  "Autobuses",
+    "BOAT":                 "Barcos y ferrys",
+    "FERRY":                "Barcos y ferrys",
+    "FLIGHT":               "Aviones",
+    "TAXI":                 "Taxis",
+    "RIDESHARE":            "Taxis",
+    "PARKING":              "Parking",
+    # Transport — generic (bunq uses TRANSPORTATION as a catch-all)
+    "TRANSPORTATION":       "Taxis",
+    # Leisure / activities
+    "ENTERTAINMENT":        "Entradas",
+    "ACTIVITIES":           "Entradas",
+    "SPORT":                "Entradas",
+    "SPORT_AND_FITNESS":    "Entradas",
+    # Shopping / daily
+    "GROCERIES":            "Supermercado",
+    "SUPERMARKET":          "Supermercado",
+    "SHOPPING":             "Supermercado",
+    # Health
+    "HEALTH":               "Farmacia",
+    "PHARMACY":             "Farmacia",
+    "MEDICAL":              "Farmacia",
+    "HEALTH_AND_BEAUTY":    "Farmacia",
+    # Personal
+    "PERSONAL":             "Gastos personales",
+    "PERSONAL_CARE":        "Gastos personales",
+    # Settlements / reimbursements
+    "SETTLEMENT":           "Tricount Close",
+    # Generic fallback
+    "OTHER":                "Otros",
+    "UNCATEGORIZED":        "UNCATEGORIZED",
+}
+
+
+def _map_tricount_category(raw: str) -> str:
+    """
+    Convert a Tricount category string to one of our preset categories.
+    - Known mappings → preset name
+    - Unknown non-empty strings → kept as-is (becomes a custom category)
+    - Empty / None → UNCATEGORIZED
+    """
+    if not raw:
+        return "UNCATEGORIZED"
+    mapped = _TRICOUNT_CATEGORY_MAP.get(raw.upper())
+    if mapped is not None:
+        return mapped
+    # Unknown Tricount category: title-case it and pass through as custom
+    return raw.replace("_", " ").title()
 
 
 def fetch_from_tricount(registry_id: str) -> ParsedData:
@@ -21,11 +85,20 @@ def fetch_from_tricount(registry_id: str) -> ParsedData:
 def _registry_to_parsed_data(registry) -> ParsedData:
     expenses: list[Expense] = []
     allocations: list[Allocation] = []
+    custom_categories: list[str] = []
 
     for entry in registry.entries:
         date = entry.date
         if date.tzinfo is None:
             date = date.replace(tzinfo=timezone.utc)
+
+        category = _map_tricount_category(entry.category)
+
+        # Collect unknown categories (not preset, not UNCATEGORIZED) as custom
+        if category not in PRESET_CATEGORIES and category != "UNCATEGORIZED":
+            if category not in custom_categories:
+                custom_categories.append(category)
+
         expenses.append(Expense(
             entry_id=entry.id,
             date=date,
@@ -34,7 +107,7 @@ def _registry_to_parsed_data(registry) -> ParsedData:
             currency=entry.amount.currency,
             payer=entry.payer_name,
             is_reimbursement=entry.is_reimbursement,
-            category="UNCATEGORIZED",
+            category=category,
         ))
         for alloc in entry.allocations:
             allocations.append(Allocation(
@@ -53,7 +126,6 @@ def _registry_to_parsed_data(registry) -> ParsedData:
         for m in registry.members
     ]
 
-    # Compute balances from entries
     balance_map: dict[str, float] = {m.display_name: 0.0 for m in registry.members}
     for entry in registry.entries:
         balance_map[entry.payer_name] = balance_map.get(entry.payer_name, 0.0) + abs(entry.amount.value)
@@ -70,4 +142,5 @@ def _registry_to_parsed_data(registry) -> ParsedData:
         allocations=allocations,
         members=members,
         balances=balances,
+        custom_categories=custom_categories,
     )
