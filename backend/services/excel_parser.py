@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from backend.models import ParsedData, Expense, Allocation, Member, Balance
 
 
-def parse_tricount_excel(file_path: str | Path) -> ParsedData:
+def parse_expense_excel(file_path: str | Path) -> ParsedData:
     with pd.ExcelFile(file_path) as xl:
         sheets = {name: xl.parse(name) for name in xl.sheet_names}
 

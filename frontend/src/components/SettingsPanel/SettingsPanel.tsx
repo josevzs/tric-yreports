@@ -98,12 +98,13 @@ export default function SettingsPanel() {
             </div>
 
             <div className={`settings-provider-block ${settings.provider === 'ollama' ? 'active' : ''}`}>
-              <div className="settings-provider-label">Ollama (local)</div>
+              <div className="settings-provider-label">Ollama</div>
               <div className="settings-fields">
                 <div className="settings-field">
                   <label>BASE URL</label>
                   <input
                     type="text"
+                    placeholder="http://your-ollama-server:11434"
                     value={settings.ollama_base_url}
                     onChange={e => handleChange({ ollama_base_url: e.target.value })}
                   />
@@ -121,6 +122,11 @@ export default function SettingsPanel() {
             </div>
 
           </div>
+
+          <p className="settings-hint">
+            Keys are stored in your browser only and never logged by this server.
+            You must provide your own API key or Ollama server URL.
+          </p>
         </div>
       )}
     </div>

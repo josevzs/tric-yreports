@@ -1,13 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from backend.models import ProviderSettings
 from backend.config import load_settings, save_settings
+from backend.limiter import limiter
 
 router = APIRouter()
 
 
 @router.get("/settings", response_model=ProviderSettings)
-async def get_settings():
+@limiter.limit("20/minute")
+async def get_settings(request: Request):
     settings = load_settings()
     # Mask API keys in response (show only if set, not the actual value)
     masked = settings.model_copy()
@@ -19,7 +21,8 @@ async def get_settings():
 
 
 @router.post("/settings")
-async def update_settings(body: ProviderSettings):
+@limiter.limit("20/minute")
+async def update_settings(request: Request, body: ProviderSettings):
     current = load_settings()
     # Don't overwrite real keys if placeholder is sent
     if body.claude_api_key == "***set***":

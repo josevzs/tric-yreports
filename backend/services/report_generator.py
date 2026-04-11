@@ -585,3 +585,115 @@ def _category_table_style(n_rows: int):
 
 def _truncate(text: str, max_len: int) -> str:
     return text if len(text) <= max_len else text[: max_len - 1] + "…"
+
+
+# ─────────────────────────────────────────────
+#  XLSX  (pandas + openpyxl)
+# ─────────────────────────────────────────────
+
+def generate_xlsx(
+    data: ParsedData,
+    trip_name: str,
+    report_mode: str = "global",
+    personal_member: str | None = None,
+    exclude_personal_expenses: bool = False,
+) -> bytes:
+    import pandas as pd
+
+    expenses = _filter_expenses(data, report_mode, personal_member, exclude_personal_expenses)
+
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        # ── Sheet 1: All expenses ──
+        exp_rows = [
+            {
+                "Date": e.date.strftime("%Y-%m-%d") if e.date else "",
+                "Description": e.description,
+                "Category": e.category,
+                "Paid by": e.payer,
+                "Amount (EUR)": round(e.amount, 2),
+            }
+            for e in sorted(expenses, key=lambda e: e.date or datetime.min)
+        ]
+        pd.DataFrame(exp_rows).to_excel(writer, sheet_name="Expenses", index=False)
+
+        # ── Sheet 2: Summary by category ──
+        totals = _category_totals(expenses)
+        grand_total = sum(totals.values())
+        summary_rows = [
+            {
+                "Category": cat,
+                "Amount (EUR)": round(total, 2),
+                "% of Total": round(total / grand_total * 100, 1) if grand_total else 0.0,
+                "# Items": sum(1 for e in expenses if e.category == cat),
+            }
+            for cat, total in sorted(totals.items(), key=lambda x: -x[1])
+        ]
+        summary_rows.append({
+            "Category": "TOTAL",
+            "Amount (EUR)": round(grand_total, 2),
+            "% of Total": 100.0,
+            "# Items": len(expenses),
+        })
+        pd.DataFrame(summary_rows).to_excel(writer, sheet_name="Summary", index=False)
+
+        # ── Sheet 3: Balance sheet (global) or Personal comparison (personal) ──
+        if report_mode == "global":
+            paid_by: dict[str, float] = defaultdict(float)
+            for e in expenses:
+                paid_by[e.payer] += e.amount
+            share_per = grand_total / len(data.members) if data.members else 0.0
+            balance_rows = [
+                {
+                    "Participant": b.member,
+                    "Paid (EUR)": round(paid_by.get(b.member, 0.0), 2),
+                    "Fair Share (EUR)": round(share_per, 2),
+                    "Balance (EUR)": round(paid_by.get(b.member, 0.0) - share_per, 2),
+                }
+                for b in data.balances
+            ]
+            pd.DataFrame(balance_rows).to_excel(writer, sheet_name="Balance Sheet", index=False)
+        elif report_mode == "personal" and personal_member:
+            stats = _personal_stats(data, personal_member)
+            comp_rows = [
+                {"Metric": "Global trip total", "Amount (EUR)": round(stats["global_total"], 2)},
+                {"Metric": f"Fair share per person ({stats['n_members']} members)", "Amount (EUR)": round(stats["global_per_person"], 2)},
+                {"Metric": f"{personal_member} \u2014 total paid", "Amount (EUR)": round(stats["personal_paid"], 2)},
+                {"Metric": f"{personal_member} \u2014 allocated share", "Amount (EUR)": round(stats["personal_share"], 2)},
+                {"Metric": "Difference from fair share", "Amount (EUR)": round(stats["diff_from_avg"], 2)},
+            ]
+            pd.DataFrame(comp_rows).to_excel(writer, sheet_name="Personal Comparison", index=False)
+
+    return buffer.getvalue()
+
+
+# ─────────────────────────────────────────────
+#  CSV  (pandas)
+# ─────────────────────────────────────────────
+
+def generate_csv(
+    data: ParsedData,
+    trip_name: str,
+    report_mode: str = "global",
+    personal_member: str | None = None,
+    exclude_personal_expenses: bool = False,
+) -> bytes:
+    import pandas as pd
+
+    expenses = _filter_expenses(data, report_mode, personal_member, exclude_personal_expenses)
+
+    rows = [
+        {
+            "Date": e.date.strftime("%Y-%m-%d") if e.date else "",
+            "Description": e.description,
+            "Category": e.category,
+            "Paid by": e.payer,
+            "Amount (EUR)": round(e.amount, 2),
+        }
+        for e in sorted(expenses, key=lambda e: e.date or datetime.min)
+    ]
+
+    buffer = BytesIO()
+    # utf-8-sig BOM ensures Excel opens the file with correct encoding
+    pd.DataFrame(rows).to_csv(buffer, index=False, encoding="utf-8-sig")
+    return buffer.getvalue()

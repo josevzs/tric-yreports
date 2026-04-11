@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-logger = logging.getLogger("tricountreport.categorize")
+logger = logging.getLogger("easyexpense.categorize")
 
 from backend.models import (
     CategorizationRequest, CategorizationResponse,
@@ -12,7 +12,7 @@ from backend.models import (
 from backend.config import load_settings
 from backend.services.categorizer import categorize_expenses, categorize_expenses_streaming, suggest_categories_for_trip
 from backend.storage import session_store
-from backend.main import limiter
+from backend.limiter import limiter
 
 router = APIRouter()
 

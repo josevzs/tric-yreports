@@ -13,6 +13,8 @@ export default function ReportView() {
   const [excludePersonal, setExcludePersonal] = useState(false);
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [xlsxBase64, setXlsxBase64] = useState<string | null>(null);
+  const [csvB64, setCsvB64] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'preview' | 'raw'>('preview');
@@ -22,13 +24,15 @@ export default function ReportView() {
     setLoading(true);
     setError(null);
     try {
-      const result = await generateReport(sessionId, tripName, ['markdown', 'pdf'], {
+      const result = await generateReport(sessionId, tripName, ['markdown', 'pdf', 'xlsx', 'csv'], {
         report_mode: reportMode,
         personal_member: reportMode === 'personal' ? personalMember : undefined,
         exclude_personal_expenses: reportMode === 'personal' ? excludePersonal : false,
       });
       setMarkdown(result.markdown);
       setPdfBase64(result.pdf_base64);
+      setXlsxBase64(result.xlsx_base64);
+      setCsvB64(result.csv_b64);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Report generation failed');
     } finally {
@@ -52,6 +56,28 @@ export default function ReportView() {
     const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }));
     const a = document.createElement('a');
     a.href = url; a.download = `${tripName}.md`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadXlsx() {
+    if (!xlsxBase64) return;
+    const bytes = atob(xlsxBase64);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `${tripName}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadCsv() {
+    if (!csvB64) return;
+    const bytes = atob(csvB64);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([arr], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `${tripName}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -123,6 +149,8 @@ export default function ReportView() {
           <div className="report-downloads">
             <button className="btn btn-sm" onClick={downloadMd}>↓ .md</button>
             <button className="btn btn-sm btn-fill" onClick={downloadPdf}>↓ .pdf</button>
+            <button className="btn btn-sm" onClick={downloadXlsx}>↓ .xlsx</button>
+            <button className="btn btn-sm" onClick={downloadCsv}>↓ .csv</button>
           </div>
         )}
 

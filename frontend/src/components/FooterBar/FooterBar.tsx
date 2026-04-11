@@ -64,7 +64,7 @@ function Overlay({ onClose, children }: { onClose: () => void; children: React.R
 function HowToPage() {
   return (
     <>
-      <h2>How to use TricountReport</h2>
+      <h2>How to use EasyExpense</h2>
 
       <h4>Step 1 — Load your data</h4>
       <p>
@@ -104,8 +104,8 @@ function HowToPage() {
       <p>
         Choose a trip name, select <strong>Global</strong> (totals for the whole group) or
         <strong>Personal</strong> (one member's share of each expense), and click
-        <strong>Generate Report</strong>. Download as <code>.md</code> (Markdown) or
-        <code>.pdf</code>.
+        <strong>Generate Report</strong>. Download as <code>.md</code>, <code>.pdf</code>,
+        <code>.xlsx</code>, or <code>.csv</code>.
       </p>
 
       <h4>AI provider setup</h4>
@@ -133,7 +133,7 @@ function HowToPage() {
       <p>
         All data stays on your browser and the local server. Nothing is sent to third-party
         services except the AI provider you choose (only expense descriptions — no names,
-        amounts, or balances). Sessions expire after 48 hours.
+        amounts, or balances). Sessions expire after 6 hours.
       </p>
     </>
   );
@@ -148,7 +148,7 @@ function LegalPage() {
 
       <h4>What this service is</h4>
       <p>
-        TricountReport is a free, open-source tool for generating expense reports from Tricount
+        EasyExpense is a free, open-source tool for generating expense reports from Tricount
         data. It is provided as-is, with no warranty. It is not affiliated with Tricount or any
         AI provider.
       </p>
@@ -161,7 +161,7 @@ function LegalPage() {
       <ul>
         <li>
           <strong>What is stored:</strong> expense data you upload or fetch is held in a
-          temporary server-side session that expires after 48 hours. It is also cached in your
+          temporary server-side session that expires after 6 hours. It is also cached in your
           browser's <code>localStorage</code>.
         </li>
         <li>
@@ -197,15 +197,26 @@ function LegalPage() {
 
       <h4>Analytics</h4>
       <p>
-        When deployed publicly, this site may use{' '}
-        <a href="https://plausible.io" target="_blank" rel="noreferrer">Plausible Analytics</a>
-        {' '}— a privacy-first, cookie-free analytics tool. Plausible does not collect personal
-        data, does not use cookies, and is fully GDPR-compliant. No consent banner is required.
-        The data collected is limited to: page views, referrer source, country, device type,
-        and browser. Your IP address is never stored.
+        This site uses{' '}
+        <a href="https://umami.is" target="_blank" rel="noreferrer">Umami Analytics</a>
+        {' '}— a privacy-first, cookie-free, self-hosted analytics tool. Umami does not collect
+        personal data, does not use cookies, and is fully GDPR-compliant. No consent banner is
+        required. The data collected is limited to: page views, referrer source, country, device
+        type, and browser. Your IP address is never stored. All analytics data is held on the
+        same server as the app and is never shared with third parties.
       </p>
       <p>
         If you are running this tool locally, no analytics are active.
+      </p>
+
+      <h4>Contact</h4>
+      <p>
+        For any questions about how your data is processed, or to exercise your GDPR rights,
+        open an issue on{' '}
+        <a href="https://github.com/josevzs/easyexpense/issues" target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+        . Data requests are handled within 30 days.
       </p>
 
       <h4>Affiliate &amp; referral links</h4>
@@ -230,7 +241,7 @@ function LegalPage() {
       <h4>Open source</h4>
       <p>
         Source code is available on{' '}
-        <a href="https://github.com/josevzs/tric-yreports" target="_blank" rel="noreferrer">
+        <a href="https://github.com/josevzs/easyexpense" target="_blank" rel="noreferrer">
           GitHub
         </a>
         . MIT licence.
@@ -260,7 +271,7 @@ export default function FooterBar() {
         <div className="fb-right">
         <a
           className="fb-link fb-icon-link"
-          href="https://github.com/josevzs/tric-yreports"
+          href="https://github.com/josevzs/easyexpense"
           target="_blank"
           rel="noreferrer"
           title="Source code on GitHub"

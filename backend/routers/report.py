@@ -3,20 +3,25 @@ import logging
 import re
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
+from typing import Optional
 
 from backend.models import ReportRequest, ReportResponse
-from backend.services.report_generator import generate_markdown, generate_pdf
+from backend.services.report_generator import generate_markdown, generate_pdf, generate_xlsx, generate_csv
 from backend.storage import session_store
-from backend.main import limiter
+from backend.limiter import limiter
 
-logger = logging.getLogger("tricountreport.report")
+logger = logging.getLogger("easyexpense.report")
 router = APIRouter()
 
 
 def _safe_filename(name: str) -> str:
-    """Remove path separators and shell-unsafe characters from a user-supplied filename."""
-    name = name.replace("/", "_").replace("\\", "_").replace("\0", "")
-    name = re.sub(r'[<>:"|?*]', "_", name)
+    """Remove path separators, control characters, and shell-unsafe chars from a filename."""
+    # Strip null bytes and all control characters (includes \n \r \t etc.)
+    name = re.sub(r'[\x00-\x1f\x7f]', '', name)
+    # Remove path separators
+    name = name.replace("/", "_").replace("\\", "_")
+    # Remove Windows-forbidden and shell-special characters
+    name = re.sub(r'[<>:"|?*`\';&$!]', "_", name)
     return name.strip()[:100] or "Trip_Report"
 
 
@@ -53,13 +58,31 @@ async def generate_report(request: Request, body: ReportRequest):
             logger.exception("PDF generation failed")
             raise HTTPException(status_code=500, detail="PDF generation failed. Please try again.")
 
+    if "xlsx" in body.formats:
+        try:
+            xlsx_bytes = generate_xlsx(data, safe_trip_name, **kwargs)
+            result.xlsx_base64 = base64.b64encode(xlsx_bytes).decode("utf-8")
+        except Exception:
+            logger.exception("XLSX generation failed")
+            raise HTTPException(status_code=500, detail="XLSX generation failed. Please try again.")
+
+    if "csv" in body.formats:
+        try:
+            csv_bytes = generate_csv(data, safe_trip_name, **kwargs)
+            result.csv_b64 = base64.b64encode(csv_bytes).decode("utf-8")
+        except Exception:
+            logger.exception("CSV generation failed")
+            raise HTTPException(status_code=500, detail="CSV generation failed. Please try again.")
+
     return result
 
 
 @router.get("/report/download/{session_id}/{format}")
+@limiter.limit("10/minute")
 async def download_report(
+    request: Request,
     session_id: str, format: str, trip_name: str = "Trip Report",
-    report_mode: str = "global", personal_member: str | None = None,
+    report_mode: str = "global", personal_member: Optional[str] = None,
     exclude_personal_expenses: bool = False,
 ):
     data = session_store.get_session(session_id)
@@ -87,5 +110,19 @@ async def download_report(
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
         )
+    elif format == "xlsx":
+        xlsx_bytes = generate_xlsx(data, safe_name, **kwargs)
+        return Response(
+            content=xlsx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.xlsx"'},
+        )
+    elif format == "csv":
+        csv_bytes = generate_csv(data, safe_name, **kwargs)
+        return Response(
+            content=csv_bytes,
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.csv"'},
+        )
     else:
-        raise HTTPException(status_code=400, detail="Format must be 'md' or 'pdf'")
+        raise HTTPException(status_code=400, detail="Format must be 'md', 'pdf', 'xlsx', or 'csv'")

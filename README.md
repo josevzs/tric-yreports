@@ -1,4 +1,4 @@
-# tric-yreports
+# EasyExpense
 
 Turn your Tricount export into a clean expense report — AI-categorized, PDF-ready.
 
@@ -8,7 +8,7 @@ Turn your Tricount export into a clean expense report — AI-categorized, PDF-re
 - **AI auto-categorization** with Claude, OpenAI, or local Ollama
 - **Manual review & correction** with confidence badges and per-column filters
 - **Global & personal reports** — full group totals or one member's allocation share
-- **Report generation** in Markdown and PDF with totals by category and balance sheet
+- **Report generation** in Markdown, PDF, Excel (.xlsx), and CSV with totals by category and balance sheet
 - **Dark / light theme**, session persistence across page reloads
 
 ## Prerequisites
@@ -22,7 +22,7 @@ Turn your Tricount export into a clean expense report — AI-categorized, PDF-re
 
 ```bash
 # (Optional) activate your virtualenv / conda env
-conda activate tricount
+conda activate easyexpense
 
 pip install -r backend/requirements.txt
 
@@ -69,7 +69,7 @@ ALLOWED_ORIGINS=https://yourdomain.com
 | **01 — Load** | Upload `data.xlsx` or paste a Tricount share link / registry ID |
 | **02 — Categorize** | Click "Auto-categorize with AI", then apply high-confidence suggestions |
 | **03 — Review** | Correct any wrong categories; session survives page reloads |
-| **04 — Report** | Set trip name, choose Global or Personal mode, download `.md` / `.pdf` |
+| **04 — Report** | Set trip name, choose Global or Personal mode, download `.md` / `.pdf` / `.xlsx` / `.csv` |
 
 ## Categories
 
@@ -84,8 +84,8 @@ The AI can also propose additional categories when needed.
 
 ## Deploying on a server
 
-See `HOW_TO.md` (gitignored, local copy only) for a full step-by-step guide covering
-nginx, systemd, Let's Encrypt HTTPS, environment variables, and session storage.
+See `HOW_TO.md` for a full step-by-step guide covering nginx, systemd, Let's Encrypt HTTPS,
+environment variables, and session storage.
 
 ## Licence
 

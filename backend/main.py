@@ -4,10 +4,10 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from backend.limiter import limiter
 
 from backend.routers import upload, fetch, expenses, categorize, settings_router, report
 
@@ -15,7 +15,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
-logger = logging.getLogger("tricountreport")
+logger = logging.getLogger("easyexpense")
 
 # ── CORS ──────────────────────────────────────────────────────────────────
 _env_origins = os.getenv("ALLOWED_ORIGINS", "")
@@ -32,10 +32,7 @@ ALLOWED_ORIGINS = (
     or ["http://localhost:5173", "http://localhost:4173"]
 )
 
-# ── Rate limiting ─────────────────────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
-
-app = FastAPI(title="tric-yreports API", version="1.0.0")
+app = FastAPI(title="EasyExpense API", version="1.0.0")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

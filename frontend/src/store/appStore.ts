@@ -178,7 +178,7 @@ export const useAppStore = create<AppState>()(
       }),
     }),
     {
-      name: 'tric-yreports',
+      name: 'easyexpense',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Provider settings + cached inputs

@@ -22,7 +22,7 @@ function parseRegistryInput(input: string): string {
 }
 
 export default function UploadStep() {
-  const [tab, setTab] = useState<'file' | 'fetch'>('file');
+  const [tab, setTab] = useState<'file' | 'fetch'>('fetch');
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -79,11 +79,11 @@ export default function UploadStep() {
       </div>
 
       <div className="upload-tabs">
-        <button className={`upload-tab ${tab === 'file' ? 'active' : ''}`} onClick={() => setTab('file')}>
-          Upload .xlsx
-        </button>
         <button className={`upload-tab ${tab === 'fetch' ? 'active' : ''}`} onClick={() => setTab('fetch')}>
           Fetch from Tricount
+        </button>
+        <button className={`upload-tab ${tab === 'file' ? 'active' : ''}`} onClick={() => setTab('file')}>
+          Upload .xlsx
         </button>
       </div>
 

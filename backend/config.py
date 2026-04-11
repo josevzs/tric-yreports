@@ -33,3 +33,7 @@ def save_settings(settings: ProviderSettings) -> None:
     SETTINGS_PATH.write_text(
         settings.model_dump_json(indent=2), encoding="utf-8"
     )
+    try:
+        os.chmod(SETTINGS_PATH, 0o600)
+    except OSError:
+        pass  # Non-fatal on Windows or read-only filesystems

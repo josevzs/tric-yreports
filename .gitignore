@@ -10,3 +10,7 @@ frontend/.vite/
 *.egg-info/
 .DS_Store
 HOW_TO.md
+HOW_TO_FOR_CLAUDE.md
+PRODUCT.md
+data.xlsx
+.claude/

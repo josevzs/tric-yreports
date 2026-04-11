@@ -1,8 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" fill="#000"/>
-  <!-- Bebas Neue-style "t": wide crossbar, tall stem, flat serifs -->
-  <!-- Crossbar -->
-  <rect x="4" y="7" width="24" height="5" fill="#fff"/>
-  <!-- Stem -->
-  <rect x="12" y="7" width="8" height="20" fill="#fff"/>
+  <!-- E — vertical stem -->
+  <rect x="5" y="5" width="5" height="22" fill="#fff"/>
+  <!-- E — top bar -->
+  <rect x="5" y="5" width="18" height="5" fill="#fff"/>
+  <!-- E — middle bar (shorter) -->
+  <rect x="5" y="14" width="14" height="4" fill="#fff"/>
+  <!-- E — bottom bar -->
+  <rect x="5" y="22" width="18" height="5" fill="#fff"/>
 </svg>

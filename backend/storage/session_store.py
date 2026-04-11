@@ -11,7 +11,7 @@ from pathlib import Path
 
 from backend.models import ParsedData, Expense
 
-logger = logging.getLogger("tricountreport.sessions")
+logger = logging.getLogger("easyexpense.sessions")
 
 _store: dict[str, ParsedData] = {}
 _timestamps: dict[str, float] = {}  # session_id -> creation time (epoch)

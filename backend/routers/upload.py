@@ -1,17 +1,21 @@
+import logging
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 
 from backend.models import UploadSummary
-from backend.services.excel_parser import parse_tricount_excel
+from backend.services.excel_parser import parse_expense_excel
 from backend.storage import session_store
+from backend.limiter import limiter
 
+logger = logging.getLogger("easyexpense.upload")
 router = APIRouter()
 
 
 @router.post("/upload", response_model=UploadSummary)
-async def upload_file(file: UploadFile = File(...)):
+@limiter.limit("10/minute")
+async def upload_file(request: Request, file: UploadFile = File(...)):
     if not file.filename or not file.filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Only .xlsx files are accepted")
 
@@ -25,9 +29,10 @@ async def upload_file(file: UploadFile = File(...)):
         tmp_path = Path(tmp.name)
 
     try:
-        data = parse_tricount_excel(tmp_path)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=f"Failed to parse Excel file: {e}")
+        data = parse_expense_excel(tmp_path)
+    except Exception:
+        logger.exception("Failed to parse uploaded Excel file")
+        raise HTTPException(status_code=422, detail="Could not parse the uploaded file. Make sure it is a valid Tricount export.")
     finally:
         tmp_path.unlink(missing_ok=True)
 

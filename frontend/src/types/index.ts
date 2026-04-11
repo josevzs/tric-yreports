@@ -75,4 +75,6 @@ export interface UploadSummary {
 export interface ReportResponse {
   markdown: string | null;
   pdf_base64: string | null;
+  xlsx_base64: string | null;
+  csv_b64: string | null;
 }
