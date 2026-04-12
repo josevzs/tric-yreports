@@ -82,11 +82,6 @@ Taxis · Tricount Close · Otros
 
 The AI can also propose additional categories when needed.
 
-## Deploying on a server
-
-See `HOW_TO.md` for a full step-by-step guide covering nginx, systemd, Let's Encrypt HTTPS,
-environment variables, and session storage.
-
 ## Licence
 
 MIT
